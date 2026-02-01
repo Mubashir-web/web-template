@@ -9,7 +9,7 @@ spec:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
     command:
-    - /busybox/sh
+    - /bin/sh
     args:
     - -c
     - cat
@@ -19,6 +19,7 @@ spec:
     command:
     - cat
     tty: true
+
 
 """
         }
