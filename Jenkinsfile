@@ -6,19 +6,14 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:latest
-    command:
-    - /bin/sh
-    args:
-    - -c
-    - cat
-    tty: true
-  - name: git
-    image: alpine/git:latest
-    command:
-    - cat
-    tty: true
+- name: kaniko
+  image: gcr.io/kaniko-project/executor:debug
+  command: ["cat"]
+  tty: true
+- name: git
+  image: alpine/git:latest
+  command: ["cat"]
+  tty: true
 
 
 """
@@ -42,14 +37,15 @@ spec:
         stage('Build & Push Image with Kaniko') {
     steps {
         container('kaniko') {
-            withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                sh """
-                mkdir -p /kaniko/.docker
-                echo "{\\"auths\\":{\\"https://index.docker.io/v1/\\":{\\"username\\":\\"$USER\\",\\"password\\":\\"$PASS\\"}}}" > /kaniko/.docker/config.json
-                /kaniko/executor --dockerfile=Dockerfile --context=. --destination=${REGISTRY}/${IMAGE}:${BUILD_NUMBER} --destination=${REGISTRY}/${IMAGE}:latest
-                """
-            }
-        }
+  withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+    sh '''
+      mkdir -p /kaniko/.docker
+      echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$USER\",\"password\":\"$PASS\"}}}" > /kaniko/.docker/config.json
+      /kaniko/executor --dockerfile=Dockerfile --context=dir://$(pwd) --destination=${REGISTRY}/${IMAGE}:${BUILD_NUMBER} --destination=${REGISTRY}/${IMAGE}:latest
+    '''
+  }
+}
+
     }
 }
 
