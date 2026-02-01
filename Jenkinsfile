@@ -6,13 +6,15 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: docker
-    image: docker:20.10.7
-    command: [ "cat" ]
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:latest
+    command:
+    - cat
     tty: true
   - name: git
     image: alpine/git:latest
-    command: [ "cat" ]
+    command:
+    - cat
     tty: true
 """
         }
@@ -32,23 +34,14 @@ spec:
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build & Push Image with Kaniko') {
             steps {
-                container('docker') {
-                    sh "docker build -t ${REGISTRY}/${IMAGE}:${BUILD_NUMBER} ."
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                container('docker') {
+                container('kaniko') {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                         sh """
-                        echo $PASS | docker login -u $USER --password-stdin
-                        docker push ${REGISTRY}/${IMAGE}:${BUILD_NUMBER}
-                        docker tag ${REGISTRY}/${IMAGE}:${BUILD_NUMBER} ${REGISTRY}/${IMAGE}:latest
-                        docker push ${REGISTRY}/${IMAGE}:latest
+                        mkdir -p /kaniko/.docker
+                        echo "{\\"auths\\":{\\"https://index.docker.io/v1/\\":{\\"username\\":\\"$USER\\",\\"password\\":\\"$PASS\\"}}}" > /kaniko/.docker/config.json
+                        /kaniko/executor --dockerfile=Dockerfile --context=. --destination=${REGISTRY}/${IMAGE}:${BUILD_NUMBER} --destination=${REGISTRY}/${IMAGE}:latest
                         """
                     }
                 }
