@@ -8,6 +8,10 @@ spec:
   containers:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
+    command: 
+    - sleep 
+    args: 
+    - infinity
     tty: true
   - name: git
     image: alpine/git:latest
