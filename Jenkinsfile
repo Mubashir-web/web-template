@@ -8,15 +8,18 @@ spec:
   containers:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
-    command: 
-    - sleep 
-    args: 
-    - infinity
+    command:
+    - /busybox/sh
+    args:
+    - -c
+    - cat
     tty: true
   - name: git
     image: alpine/git:latest
-    command: [ "cat" ]
+    command:
+    - cat
     tty: true
+
 """
         }
     }
