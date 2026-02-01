@@ -8,13 +8,10 @@ spec:
   containers:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
-    command:
-    - cat
     tty: true
   - name: git
     image: alpine/git:latest
-    command:
-    - cat
+    command: [ "cat" ]
     tty: true
 """
         }
