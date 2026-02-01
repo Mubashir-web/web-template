@@ -33,18 +33,28 @@ spec:
     }
 
     stage('Build & Push Image with Kaniko') {
-      steps {
-        container('kaniko') {
-          withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-            sh '''
-              mkdir -p /kaniko/.docker
-              echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$USER\",\"password\":\"$PASS\"}}}" > /kaniko/.docker/config.json
-              /kaniko/executor --dockerfile=Dockerfile --context=dir://$(pwd) --destination=${REGISTRY}/${IMAGE}:${BUILD_NUMBER} --destination=${REGISTRY}/${IMAGE}:latest
-            '''
-          }
-        }
+  steps {
+    container('kaniko') {
+      withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+        sh '''
+          mkdir -p /kaniko/.docker
+          cat > /kaniko/.docker/config.json <<EOF
+{
+  "auths": {
+    "https://index.docker.io/v1/": {
+      "username": "${USER}",
+      "password": "${PASS}"
+    }
+  }
+}
+EOF
+          /kaniko/executor --dockerfile=Dockerfile --context=dir://$(pwd) --destination=${REGISTRY}/${IMAGE}:${BUILD_NUMBER} --destination=${REGISTRY}/${IMAGE}:latest
+        '''
       }
     }
+  }
+}
+
 
     stage('Update GitOps Repo') {
       steps {
